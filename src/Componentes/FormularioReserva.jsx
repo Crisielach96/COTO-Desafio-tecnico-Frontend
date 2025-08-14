@@ -101,7 +101,9 @@ const generarHorasInicio = () => {
   for (let h = 9; h <= 17; h++) {
     for (let m = 0; m < 60; m += 30) {
       if (h === 17 && m > 30) continue;
-      horas.push(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`);
+      horas.push(
+        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
+      );
     }
   }
   return horas;
@@ -113,7 +115,9 @@ const generarHorasFin = () => {
     const minutosInicio = h === 9 ? 30 : 0;
     for (let m = minutosInicio; m < 60; m += 30) {
       if (h === 18 && m > 0) continue;
-      horas.push(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`);
+      horas.push(
+        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
+      );
     }
   }
   return horas;
@@ -124,13 +128,19 @@ const agregarMinutos = (horaStr, minutosAgregar) => {
   const date = new Date();
   date.setHours(h);
   date.setMinutes(m + minutosAgregar);
-  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+  return `${date.getHours().toString().padStart(2, "0")}:${date
+    .getMinutes()
+    .toString()
+    .padStart(2, "0")}`;
 };
 
 // -------------------- Component --------------------
 const FormularioReserva = ({ onReservaCreada }) => {
   const now = new Date();
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(now.getDate()).padStart(2, "0")}`;
 
   const { setValue, register, handleSubmit, reset } = useForm();
   const [error, setError] = useState("");
@@ -152,8 +162,10 @@ const FormularioReserva = ({ onReservaCreada }) => {
     const fetchReservas = async () => {
       if (!salonId || !fecha) return;
       try {
-        const { data } = await axios.get(`https://localhost:7211/api/reserva?fecha=${fecha}`);
-        setReservas(data.filter(r => r.salonId === salonId));
+        const { data } = await axios.get(
+          `https://localhost:7211/api/reserva?fecha=${fecha}`
+        );
+        setReservas(data.filter((r) => r.salonId === salonId));
       } catch (err) {
         console.error("Error al traer reservas:", err);
       }
@@ -171,22 +183,27 @@ const FormularioReserva = ({ onReservaCreada }) => {
   }, [fecha, today]);
 
   // Filtrar horas disponibles
-  const horasDisponiblesInicioFiltradas = generarHorasInicio().filter(hora =>
-    !reservas.some(reserva => {
-      const inicioBloqueado = agregarMinutos(reserva.horaInicio, -30);
-      const finBloqueado = agregarMinutos(reserva.horaFin, 30);
-      return hora >= inicioBloqueado && hora < finBloqueado;
-    })
-  );
+  const horasDisponiblesInicioFiltradas = generarHorasInicio().filter(hora => {
+  // Si la fecha es hoy, no mostrar horas anteriores a la hora actual
+  if (fecha === today && hora < minHora) return false;
 
-  const horasDisponiblesFinFiltradas = generarHorasFin().filter(hora =>
-    horaInicio &&
-    !reservas.some(reserva => {
-      const inicioBloqueado = agregarMinutos(reserva.horaInicio, -30);
-      const finBloqueado = agregarMinutos(reserva.horaFin, 30);
-      return horaInicio < finBloqueado && hora > inicioBloqueado;
-    }) &&
-    hora > horaInicio
+  // Filtrado por reservas existentes
+  return !reservas.some(reserva => {
+    const inicioBloqueado = agregarMinutos(reserva.horaInicio, -30);
+    const finBloqueado = agregarMinutos(reserva.horaFin, 30);
+    return hora >= inicioBloqueado && hora < finBloqueado;
+  });
+});
+
+  const horasDisponiblesFinFiltradas = generarHorasFin().filter(
+    (hora) =>
+      horaInicio &&
+      !reservas.some((reserva) => {
+        const inicioBloqueado = agregarMinutos(reserva.horaInicio, -30);
+        const finBloqueado = agregarMinutos(reserva.horaFin, 30);
+        return horaInicio < finBloqueado && hora > inicioBloqueado;
+      }) &&
+      hora > horaInicio
   );
 
   // Enviar formulario
@@ -197,12 +214,23 @@ const FormularioReserva = ({ onReservaCreada }) => {
     }
     try {
       const dataToSend = { cliente, fecha, horaInicio, horaFin, salonId };
-      const { data } = await axios.post("https://localhost:7211/api/reserva", dataToSend);
-      onReservaCreada(data);
+      const { data } = await axios.post(
+        "https://localhost:7211/api/reserva",
+        dataToSend
+      );
+      setReservas((prev) => [...prev, data]);
+
+      if (onReservaCreada) onReservaCreada(data);
+
       reset();
+      setHoraInicio("");
+      setHoraFin("");
       setError("");
     } catch (err) {
-      setError(err.response?.data?.message || "Error al registrar la reserva. Inténtalo de nuevo.");
+      setError(
+        err.response?.data?.message ||
+          "Error al registrar la reserva. Inténtalo de nuevo."
+      );
     }
   };
 
@@ -211,7 +239,7 @@ const FormularioReserva = ({ onReservaCreada }) => {
       <Title>Realizar una Reserva</Title>
 
       <Row>
-        {["salon1", "salon2", "salon3"].map(salon => (
+        {["salon1", "salon2", "salon3"].map((salon) => (
           <BtnSalon
             key={salon}
             type="button"
@@ -233,8 +261,13 @@ const FormularioReserva = ({ onReservaCreada }) => {
         <Input
           placeholder="Ej: Juan Lopez"
           {...register("cliente", { required: "El nombre es obligatorio" })}
-          onChange={e => setCliente(e.target.value)}
-          onInput={e => e.target.value = e.target.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, "")}
+          onChange={(e) => setCliente(e.target.value)}
+          onInput={(e) =>
+            (e.target.value = e.target.value.replace(
+              /[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g,
+              ""
+            ))
+          }
         />
 
         <h5>Día:</h5>
@@ -242,32 +275,36 @@ const FormularioReserva = ({ onReservaCreada }) => {
           type="date"
           {...register("fecha", { required: true })}
           min={today}
-          onChange={e => setFecha(e.target.value)}
+          onChange={(e) => setFecha(e.target.value)}
         />
 
         <Row>
           <h5>Hora de inicio:</h5>
           <Select
             {...register("horaInicio", { required: true })}
-            onChange={e => setHoraInicio(e.target.value)}
+            onChange={(e) => setHoraInicio(e.target.value)}
             defaultValue=""
           >
             <option value="" disabled></option>
-            {horasDisponiblesInicioFiltradas.map(hora => (
-              <option key={hora} value={hora}>{hora}</option>
+            {horasDisponiblesInicioFiltradas.map((hora) => (
+              <option key={hora} value={hora}>
+                {hora}
+              </option>
             ))}
           </Select>
 
           <h5>Hora de finalización:</h5>
           <Select
             {...register("horaFin", { required: true })}
-            onChange={e => setHoraFin(e.target.value)}
+            onChange={(e) => setHoraFin(e.target.value)}
             defaultValue=""
             disabled={!horaInicio}
           >
             <option value="" disabled></option>
-            {horasDisponiblesFinFiltradas.map(hora => (
-              <option key={hora} value={hora}>{hora}</option>
+            {horasDisponiblesFinFiltradas.map((hora) => (
+              <option key={hora} value={hora}>
+                {hora}
+              </option>
             ))}
           </Select>
         </Row>
