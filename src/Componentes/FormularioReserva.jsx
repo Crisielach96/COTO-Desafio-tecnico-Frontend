@@ -151,6 +151,18 @@ const FormularioReserva = ({ onReservaCreada }) => {
   const [horaFin, setHoraFin] = useState("");
   const [fecha, setFecha] = useState("");
   const [salonId, setSalonId] = useState(null);
+  const [mensajeExito, setMensajeExito] = useState(() => {
+    return sessionStorage.getItem("mensajeExito") || "";
+  });
+
+  // Guardar el mensaje en sessionStorage cuando cambie
+  useEffect(() => {
+    if (mensajeExito) {
+      sessionStorage.setItem("mensajeExito", mensajeExito);
+    } else {
+      sessionStorage.removeItem("mensajeExito");
+    }
+  }, [mensajeExito]);
 
   // Reset hora fin al cambiar hora inicio
   useEffect(() => {
@@ -183,17 +195,19 @@ const FormularioReserva = ({ onReservaCreada }) => {
   }, [fecha, today]);
 
   // Filtrar horas disponibles
-  const horasDisponiblesInicioFiltradas = generarHorasInicio().filter(hora => {
-  // Si la fecha es hoy, no mostrar horas anteriores a la hora actual
-  if (fecha === today && hora < minHora) return false;
+  const horasDisponiblesInicioFiltradas = generarHorasInicio().filter(
+    (hora) => {
+      // Si la fecha es hoy, no mostrar horas anteriores a la hora actual
+      if (fecha === today && hora < minHora) return false;
 
-  // Filtrado por reservas existentes
-  return !reservas.some(reserva => {
-    const inicioBloqueado = agregarMinutos(reserva.horaInicio, -30);
-    const finBloqueado = agregarMinutos(reserva.horaFin, 30);
-    return hora >= inicioBloqueado && hora < finBloqueado;
-  });
-});
+      // Filtrado por reservas existentes
+      return !reservas.some((reserva) => {
+        const inicioBloqueado = agregarMinutos(reserva.horaInicio, -30);
+        const finBloqueado = agregarMinutos(reserva.horaFin, 30);
+        return hora >= inicioBloqueado && hora < finBloqueado;
+      });
+    }
+  );
 
   const horasDisponiblesFinFiltradas = generarHorasFin().filter(
     (hora) =>
@@ -226,6 +240,7 @@ const FormularioReserva = ({ onReservaCreada }) => {
       setHoraInicio("");
       setHoraFin("");
       setError("");
+      setMensajeExito("✅ "+ cliente +" tu reserva fue creada correctamente");
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -284,6 +299,7 @@ const FormularioReserva = ({ onReservaCreada }) => {
             {...register("horaInicio", { required: true })}
             onChange={(e) => setHoraInicio(e.target.value)}
             defaultValue=""
+            disabled={!fecha}
           >
             <option value="" disabled></option>
             {horasDisponiblesInicioFiltradas.map((hora) => (
@@ -315,6 +331,9 @@ const FormularioReserva = ({ onReservaCreada }) => {
         >
           Reservar
         </Button>
+        {mensajeExito && (
+          <p style={{ color: "green", fontWeight: "bold" }}>{mensajeExito}</p>
+        )}
       </Form>
     </Container>
   );
