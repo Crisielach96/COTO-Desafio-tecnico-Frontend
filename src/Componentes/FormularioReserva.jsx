@@ -175,7 +175,7 @@ const FormularioReserva = ({ onReservaCreada }) => {
       if (!salonId || !fecha) return;
       try {
         const { data } = await axios.get(
-          `https://localhost:7211/api/reserva?fecha=${fecha}`
+          `http://localhost:5241/api/reserva?fecha=${fecha}`
         );
         setReservas(data.filter((r) => r.salonId === salonId));
       } catch (err) {
@@ -229,7 +229,7 @@ const FormularioReserva = ({ onReservaCreada }) => {
     try {
       const dataToSend = { cliente, fecha, horaInicio, horaFin, salonId };
       const { data } = await axios.post(
-        "https://localhost:7211/api/reserva",
+        "http://localhost:5241/api/reserva",
         dataToSend
       );
       setReservas((prev) => [...prev, data]);

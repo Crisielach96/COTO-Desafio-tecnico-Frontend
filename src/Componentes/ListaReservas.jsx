@@ -72,7 +72,7 @@ const ListaReservas = ({ reservasGuardadas }) => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.get("https://localhost:7211/api/reserva", {
+      const response = await axios.get("http://localhost:5241/api/reserva", {
         params: { fecha: data.fecha },
       });
       setReservas(response.data);
